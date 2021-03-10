@@ -413,4 +413,3 @@ std::pair<double, position> findClosest(position startingPos, std::vector<positi
 *  - Add get position to task object to allow finding nearest
 *  - specify UAV position when assigning task and calculate route based upon this //DONE
 */
-
