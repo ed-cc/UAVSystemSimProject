@@ -55,6 +55,7 @@ struct posTime
 
 struct logData
 {
+	std::string name; //Name of UAV or additional information that we want to store
 	position pos; //3D position
 	int time; //Time in ms
 	UAVActivity currentActivity; //What the UAV is doing at this time

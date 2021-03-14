@@ -17,6 +17,7 @@ public:
 	void setUAVSpecification(specsUAV setSpecs);
 	std::string getName();
 	position getDestination();
+	UAVActivity getActivity();
 
 private:
 	//Variables:

@@ -142,6 +142,12 @@ void TaskObject::resetStartingPosition(position newStart)
 	
 }
 
+//This returns the first place that the UAV must be at (ignoring the starting position)
+position TaskObject::getFirstRequiredPos()
+{
+	return locationTimeList[2].pos;
+}
+
 /*
 * Assign a task object to a UAV object
 * UAV object update function called every time step

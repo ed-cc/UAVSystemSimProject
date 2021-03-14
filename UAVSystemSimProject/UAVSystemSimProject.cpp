@@ -8,13 +8,15 @@
 
 //Look through provided list of UAVs to find one that is available and is of UAVType type.
 //Returns the place in the list of the first appropriate UAV.
-int findAvailableUAV(std::vector<UAVObject> listOfUAVs, UAVType type);
+int findAvailableUAV(std::vector<UAVObject> listOfUAVs, UAVType type = UAVType::any);
 
 //Returns the first unassigned task in the task stack
 int findUnassignedTask(std::vector<TaskObject> taskStack);
 
 //Write a CSV file with all of the data logged from the given UAV
 bool writeCSV(UAVObject sourceUAV);
+//Write a csv of number of UAVs and time taken
+bool writeCSV(std::vector<std::pair<int, int>> input, std::string fileName);
 
 //Pulls a list of UAV objects defined in a file
 std::vector<UAVObject> getUAVsFromFile(std::string filename);
@@ -26,7 +28,16 @@ std::vector<TaskObject> getTasksFromFile(std::string filename);
 std::pair<double, position> findClosest(position startingPos, std::vector<position> comparisonLocations);
 
 //Generates a random list of tasks of specified type - default is random
-std::vector<TaskObject> randomTasklistGenerator(int noTasks, double maxTotalDist, position initalLocation, std::vector<position> finalLocations, TaskType requestedType = TaskType::random);
+std::vector<TaskObject> randomTasklistGenerator(int noTasks, double maxTotalDist, position initalLocation, 
+    std::vector<position> finalLocations, TaskType requestedType = TaskType::random);
+
+//Returns the location in the list of the nearest availebe UAV of UAVType type
+//Returns -1 if no available UAVs were found
+int findNearestUAV(position targetLocation, std::vector<UAVObject> listOfUAVs, UAVType type = UAVType::any);
+
+//Returns the location in the list of the nearest available Task
+//Returns -1 if no available Tasks were found
+int findNearestTask(position targetLocation, std::vector<TaskObject> listOfTasks);
 
 position UAVDepotPos{ 0, 0, 0};
 int GlobalTime = 0;
@@ -34,79 +45,150 @@ int GlobalTime = 0;
 int main()
 {
     std::vector<UAVObject> extantUAVs;
-    for (int i = 0; i < 2; i++)
-    {
-        UAVObject tempUAV;
-        std::string tempName = ("UAV_" + std::to_string(i));
-        tempUAV.init(GlobalTime, UAVDepotPos, tempName, UAVType::standard, RouteType::direct, true);
-        extantUAVs.push_back(tempUAV);
-    }
 
-    std::vector<TaskObject> listOfTasks;
-    for (int i = 0; i < 2; i++)
-    {
-        TaskObject tempUAV;
-        tempUAV.deliveryTask(GlobalTime, UAVDepotPos, position{ 50,100,0 }, position{ 100,50,0 }, UAVDepotPos, 500, UAVType::standard);
-        listOfTasks.push_back(tempUAV);
-    }
-
+    //Some positions of depots and a vector to contain them
     position anotherDepot{ 20,20,0 };
     std::vector<position> positionList;
     positionList.push_back(UAVDepotPos);
-    positionList.push_back(anotherDepot);
+    //positionList.push_back(anotherDepot);
 
+    //A vector containing all of the tasks
+    auto repeatingTasks = randomTasklistGenerator(50, 1000, UAVDepotPos, positionList);
 
-    auto moreTasks = randomTasklistGenerator(100, 100, UAVDepotPos, positionList);
-    
-    for (int i = 0; i < 2; i++)
-    {
-        //int testAvail = findAvailableUAV(extantUAVs, UAVType::standard);
-        extantUAVs[i].assignTask(moreTasks[i]);
-        moreTasks[i].setAssigned(true);
-    }
+    //Time taken for all tasks to be completed
+    std::vector<int> timeTaken;
+    //Variable for log data to be stored
+    std::vector<std::vector<logData>> allLogs;
+    std::vector<std::pair<int, int>> itterationLog; //Number of UAVs and time taken will be logged
 
     //Timestep for each simulation loop
     int timeStep = 100; //In ms
 
+    //How many UAVs to use in each loop
+    std::vector<int> numberUAVVector = { 1,2,4,8,10 };
+
     //Number of times to run the simulation loop
-    int numberOfLoops = 10 * 20000;
+    int numberOfLoops = 1000 * 200000;
 
-    //Simulation loop
-    for (int ii = 0; ii < numberOfLoops; ii++)
+    int simulationNumber = numberUAVVector.size();
+    //Run a series of simulations with different parameters:
+    for (int ij = 0; ij < simulationNumber; ++ij)
     {
-        
+        //Reset various parameters
+        GlobalTime = 0;
+        auto moreTasks = repeatingTasks;
 
-        for (unsigned int i = 0; i < extantUAVs.size(); i++)
+        //UAV Number
+        int numUAVs = numberUAVVector[ij];
+
+        //Reset all UAVs
+        extantUAVs.clear();
+        for (int ik = 0; ik < numUAVs; ++ik)
         {
-            //Run each UAVs loop function with the current time
-            extantUAVs[i].loopFunc(GlobalTime);
+            UAVObject tempUAV;
+            std::string tempName = ("UAV_" + std::to_string(ij) + "_" + std::to_string(ik));
+            tempUAV.init(GlobalTime, UAVDepotPos, tempName, UAVType::standard, RouteType::direct, true);
+            extantUAVs.push_back(tempUAV);
         }
 
-        if (extantUAVs[0].checkAvailability())
+        //Simulation loop
+        for (int ii = 0; ii < numberOfLoops; ++ii)
         {
-            int nextTask = findUnassignedTask(moreTasks);
-            if (nextTask == -1)
+            bool complete = false;
+            
+            unsigned int loopLength = (unsigned int)extantUAVs.size();
+            #pragma loop(hint_parallel(6))
+            for (unsigned int i = 0; i < loopLength; ++i)
             {
-                //No more tasks
+                //Run each UAVs loop function with the current time
+                extantUAVs[i].loopFunc(GlobalTime);
+
             }
-            else
+
+            //if (extantUAVs[0].checkAvailability())
+            //{
+            //    int nextTask = findUnassignedTask(moreTasks);
+            //    if (nextTask == -1)
+            //    {
+            //        //No more tasks
+            //    }
+            //    else
+            //    {
+            //        //Assign the same UAV the next task
+            //        moreTasks[nextTask].resetStartingPosition(extantUAVs[0].getPosition());
+            //        extantUAVs[0].assignTask(moreTasks[nextTask]);
+            //        moreTasks[nextTask].setAssigned(true);
+            //        std::cout << "New task accepted!\n";
+            //    }
+            //}
+
+            //do
+            //{
+            //    int nextUAV = findAvailableUAV(extantUAVs);
+            //    if (nextUAV == -1)
+            //    {
+            //        //No more UAVs available
+            //        break;
+            //    }
+            //    int nextTask = findNearestTask(extantUAVs[nextUAV].getPosition(), moreTasks);
+            //    if (nextTask == -1)
+            //    {
+            //        //There are no more tasks
+            //        timeTaken.push_back(GlobalTime);
+            //        break;
+            //    }
+            //    else
+            //    {
+            //        extantUAVs[nextUAV].assignTask(moreTasks[nextTask]);
+            //        moreTasks[nextTask].setAssigned(true);
+            //    }
+            //} while (1);
+
+            unsigned int loopUAVs = (unsigned int)extantUAVs.size();
+            #pragma loop(hint_parallel(6))
+            for (unsigned int i = 0; i < loopUAVs; ++i)
             {
-                //Assign the same UAV the next task
-                moreTasks[nextTask].resetStartingPosition(extantUAVs[0].getPosition());
-                extantUAVs[0].assignTask(moreTasks[nextTask]);
-                moreTasks[nextTask].setAssigned(true);
-                std::cout << "New task accepted!\n";
+                if (extantUAVs[i].checkAvailability())
+                {
+                    int nextTask = findNearestTask(extantUAVs[i].getPosition(), moreTasks);
+                    if (nextTask == -1)
+                    {
+                        //There are no more tasks
+                        timeTaken.push_back(GlobalTime);
+                        itterationLog.push_back(std::pair<int, int>{numUAVs, GlobalTime});
+                        complete = true;
+                        break;
+                    }
+                    else
+                    {
+                        extantUAVs[i].assignTask(moreTasks[nextTask]);
+                        moreTasks[nextTask].setAssigned(true);
+                    }
+                }
             }
+
+            //To avoid continuing pointlessly
+            if (complete)
+            {
+                break;
+            }
+
+            //Finally increment the global time variable
+            GlobalTime += timeStep;
         }
 
-        //Finally increment the global time variable
-        GlobalTime += timeStep;
+        //Store the logged Data
+        for (int i = 0; i < extantUAVs.size(); ++i)
+        {
+            writeCSV(extantUAVs[i]);
+        }
     }
+
+    writeCSV(itterationLog, "UAVno_Time.csv");
+    
 
     //Do something with gathered simulation data here
     //...
-
-    writeCSV(extantUAVs[0]);
 
 }
 
@@ -120,7 +202,7 @@ int findAvailableUAV(std::vector<UAVObject> listOfUAVs, UAVType type)
         ignoreTypeCheck = true;
     }
 
-    for (unsigned int i = 0; i < listOfUAVs.size(); i++)
+    for (unsigned int i = 0; i < listOfUAVs.size(); ++i)
     {
         if (listOfUAVs[i].checkAvailability())
         {
@@ -135,12 +217,101 @@ int findAvailableUAV(std::vector<UAVObject> listOfUAVs, UAVType type)
     return availableUAV;
 }
 
+//Returns the location in the list of the nearest available UAV of UAVType type
+//Returns -1 if no available UAVs were found
+int findNearestUAV(position targetLocation, std::vector<UAVObject> listOfUAVs, UAVType type)
+{
+    bool ignoreTypeCheck = false;
+    std::vector<position> availableUAVPositions;
+    std::vector<int> availableUAVindex;
+    bool noneFound = true;
+    //If type is set to any we don't need to check the UAV type
+    if (type == UAVType::any)
+    {
+        ignoreTypeCheck = true;
+    }
+
+    //Finds a list of all available UAVs and gives adds their corresponding position in listOfUAVs to availableUAVindex
+    for (unsigned int i = 0; i < listOfUAVs.size(); ++i)
+    {
+        if (listOfUAVs[i].checkAvailability())
+        {
+            if (ignoreTypeCheck || (listOfUAVs[i].getType() == type))
+            {
+                availableUAVPositions.push_back(listOfUAVs[i].getPosition());
+                availableUAVindex.push_back(i);
+                noneFound = false;
+            }
+        }
+    }
+    //Now we have a list of all availeble UAV positions, find the closest to the required position
+    if (noneFound) //If we found no available UAVs then return -1
+    {
+        return -1;
+    }
+    //Now loop through availableUAVPositions to find the closest to targetLocation
+    unsigned int positionCounter = 0;
+    int nearest = positionCounter;
+    double previous = get2DDistance(targetLocation, availableUAVPositions[positionCounter]);
+    for (positionCounter = 1; positionCounter < availableUAVPositions.size(); positionCounter++)
+    {
+        double currentDist = get2DDistance(targetLocation, availableUAVPositions[positionCounter]);
+        if (currentDist < previous)
+        {
+            previous = currentDist;
+            nearest = positionCounter;
+        }
+    }
+    //Translate the index of the closest available UAV to the entire list of UAVs
+    return availableUAVindex[positionCounter];
+}
+
+//Returns the location in the list of the nearest available Task
+//Returns -1 if no available Tasks were found
+int findNearestTask(position targetLocation, std::vector<TaskObject> listOfTasks)
+{
+    std::vector<position> availableTaskPositions;
+    std::vector<int> availableTaskindex;
+    bool noneFound = true;
+
+    //Finds a list of all available UAVs and gives adds their corresponding position in listOfUAVs to availableUAVindex
+    for (unsigned int i = 0; i < listOfTasks.size(); ++i)
+    {
+        if (!listOfTasks[i].checkAssigned())
+        {
+            availableTaskPositions.push_back(listOfTasks[i].getFirstRequiredPos());
+            availableTaskindex.push_back(i);
+            noneFound = false;
+        }
+    }
+    //Now we have a list of all availeble UAV positions, find the closest to the required position
+    if (noneFound) //If we found no available UAVs then return -1
+    {
+        return -1;
+    }
+    //Now loop through availableUAVPositions to find the closest to targetLocation
+    unsigned int positionCounter = 0;
+    int nearest = positionCounter;
+    double previous = get2DDistance(targetLocation, availableTaskPositions[positionCounter]);
+    for (positionCounter = 1; positionCounter < availableTaskPositions.size(); ++positionCounter)
+    {
+        double currentDist = get2DDistance(targetLocation, availableTaskPositions[positionCounter]);
+        if (currentDist < previous)
+        {
+            previous = currentDist;
+            nearest = positionCounter;
+        }
+    }
+    //Translate the index of the closest available UAV to the entire list of UAVs
+    return availableTaskindex[nearest];
+}
+
 //Returns the first unassigned task in the task stack
 int findUnassignedTask(std::vector<TaskObject> taskStack)
 {
     int availableTask = -1;
 
-    for (unsigned int i = 0; i < taskStack.size(); i++)
+    for (unsigned int i = 0; i < taskStack.size(); ++i)
     {
         if (!taskStack[i].checkAssigned())
         {
@@ -210,23 +381,44 @@ specsUAV getUAVSpecsFromType(UAVType requiredType)
     }
 }
 
+//Write a CSV of the log data from the provided UAVObject
 bool writeCSV(UAVObject sourceUAV)
 {
     std::vector<logData> retrievedLogData = sourceUAV.getPositionLog();
     std::ofstream targetFile;
     std::string fileName = (sourceUAV.getName() + ".csv");
     targetFile.open(fileName);
+    if (!targetFile.is_open()) return false;
     //Write a header
-    targetFile << "x, y, z, Time, Activity,\n";
+    targetFile << "name, x, y, z, Time, Activity,\n";
 
     //Write Data from log
-    for (unsigned int i = 0; i < retrievedLogData.size(); i++)
+    for (unsigned int i = 0; i < retrievedLogData.size(); ++i)
     {
-        targetFile << std::to_string(retrievedLogData[i].pos.x) << "," << std::to_string(retrievedLogData[i].pos.y) <<
+        targetFile << retrievedLogData[i].name << "," << std::to_string(retrievedLogData[i].pos.x) << "," << std::to_string(retrievedLogData[i].pos.y) <<
             "," << std::to_string(retrievedLogData[i].pos.z) << "," << std::to_string(retrievedLogData[i].time) << "," <<
             std::to_string((int)(retrievedLogData[i].currentActivity)) << ",\n";
     }
 
+    targetFile.close();
+    return true;
+}
+
+//Write a csv of number of UAVs and time taken
+bool writeCSV(std::vector<std::pair<int, int>> input, std::string fileName)
+{
+    std::ofstream targetFile;
+    targetFile.open(fileName);
+    if (!targetFile.is_open()) return false;
+
+    //Write a header
+    targetFile << "UAV_no, time,\n";
+
+    //Write data from log file
+    for (unsigned int i = 0; i < input.size(); ++i)
+    {
+        targetFile << std::to_string(input[i].first) << "," << std::to_string(input[i].second) << ",\n";
+    }
     targetFile.close();
     return true;
 }
@@ -282,8 +474,9 @@ std::vector<TaskObject> randomTasklistGenerator(int noTasks, double maxLegDist, 
         random = true;
     }
     else random = false;
-
-    for (int i = 0; i < noTasks; i++)
+    
+    #pragma loop(hint_parallel(6))
+    for (int i = 0; i < noTasks; ++i)
     {
         TaskObject tempTask;
         if (random)
@@ -338,7 +531,7 @@ std::vector<TaskObject> randomTasklistGenerator(int noTasks, double maxLegDist, 
         else if (newTaskType == TaskType::observation)
         {
             position location;
-            int timeSpent = rand() % 15*60*1000; //Time spent at location in ms
+            int timeSpent = rand() % 1000; //Time spent at location in ms
 
             // A random point at a distance less than maxLegDist is the task location and then the nearest final location to this is chosen
             // This ensures that the second leg is always equal or shorter in length to the first.
@@ -373,7 +566,7 @@ std::pair<double, position> findClosest(position startingPos, std::vector<positi
     unsigned int i = 0;
     int nearest = i;
     double previous = get2DDistance(startingPos, comparisonLocations[i]);
-    for (i = 1; i < comparisonLocations.size(); i++)
+    for (i = 1; i < comparisonLocations.size(); ++i)
     {
         double currentDist = get2DDistance(startingPos, comparisonLocations[i]);
         if (currentDist < previous)
@@ -409,7 +602,11 @@ std::pair<double, position> findClosest(position startingPos, std::vector<positi
 * Generate UAVs from file?
 * Add recharging functionality
 * 
-* Logic to allow UAVs to start tasks not from first position
-*  - Add get position to task object to allow finding nearest
+* Logic to allow UAVs to start tasks not from first position //DONE
+*  - Add get position to task object to allow finding nearest //DONE
 *  - specify UAV position when assigning task and calculate route based upon this //DONE
+* 
+* Improve logic to allow UAVs to have climb rate different to cruise speed
+* 
+* Add some sort of multithreading for computationally intensive parts
 */

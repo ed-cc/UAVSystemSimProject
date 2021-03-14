@@ -10,7 +10,7 @@ void UAVObject::init(int currentTime, position initPos, std::string name, UAVTyp
 
 	if (isLogging)
 	{
-		logData tempPosT{ initPos, currentTime, UAVActivity::landed };
+		logData tempPosT{ uavName, initPos, currentTime, UAVActivity::landed };
 		positionLog.push_back(tempPosT);
 	}
 
@@ -47,7 +47,7 @@ bool UAVObject::updatePositionLog(int currentTime)
 {
 	if (isLogging)
 	{
-		logData tempPosT{ currentPosition, currentTime , currentActivity};
+		logData tempPosT{ uavName, currentPosition, currentTime , currentActivity};
 		//logData previous = positionLog.back();
 		//if (tempPosT.time == previous.time)
 		//{
@@ -151,6 +151,7 @@ void UAVObject::loopFunc(int currentTime)
 					{
 						//There is no further location to move to
 						//The UAV is therefore available for another task
+						currentActivity = UAVActivity::landed;
 						setAvailable();
 					}
 				}
@@ -203,4 +204,9 @@ std::string UAVObject::getName()
 position UAVObject::getDestination()
 {
 	return destination;
+}
+
+UAVActivity UAVObject::getActivity()
+{
+	return currentActivity;
 }

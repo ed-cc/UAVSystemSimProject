@@ -13,6 +13,7 @@ public:
 	bool checkAssigned();
 	void setAssigned(bool assigned);
 	void resetStartingPosition(position newStart);
+	position getFirstRequiredPos();
 
 private:
 	//Variables:
