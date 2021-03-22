@@ -11,6 +11,7 @@ public:
 	std::optional<posTime> getNextPosition(int currentTime, position currentLocation);
 	void setUAVSpecification(specsUAV setSpecs);
 	bool checkAssigned();
+	bool checkComplete();
 	void setAssigned(bool assigned);
 	void resetStartingPosition(position newStart);
 	position getFirstRequiredPos();
@@ -29,6 +30,8 @@ private:
 	bool activeTask = false;
 
 	bool assignedTask = false;
+
+	bool taskComplete = false;
 	//Functions:
 	
 };

@@ -210,3 +210,8 @@ UAVActivity UAVObject::getActivity()
 {
 	return currentActivity;
 }
+
+TaskObject* UAVObject::getTaskObject()
+{
+	return &currentTask;
+}

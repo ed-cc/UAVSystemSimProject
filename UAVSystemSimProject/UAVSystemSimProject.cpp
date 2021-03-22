@@ -31,6 +31,11 @@ std::pair<double, position> findClosest(position startingPos, std::vector<positi
 std::vector<TaskObject> randomTasklistGenerator(int noTasks, double maxTotalDist, position initalLocation, 
     std::vector<position> finalLocations, TaskType requestedType = TaskType::random);
 
+//Creates a list of delivery tasks originating at initialLocation that require a pickup location of pickUpLocation
+//Tasks will finish at the nearest location in finalLocation.
+std::vector<TaskObject> generateDeliveryTasks(int noTasks, double maxLegDist, position initalLocation,
+    std::vector<position> finalLocations, position pickUpLocation, bool ignorePickup = false);
+
 //Returns the location in the list of the nearest availebe UAV of UAVType type
 //Returns -1 if no available UAVs were found
 int findNearestUAV(position targetLocation, std::vector<UAVObject> listOfUAVs, UAVType type = UAVType::any);
@@ -38,6 +43,9 @@ int findNearestUAV(position targetLocation, std::vector<UAVObject> listOfUAVs, U
 //Returns the location in the list of the nearest available Task
 //Returns -1 if no available Tasks were found
 int findNearestTask(position targetLocation, std::vector<TaskObject> listOfTasks);
+
+//Pushes every entry of extraData onto originalVector
+void vector_push_back(std::vector<position>* originalVector, std::vector<position> extraData);
 
 position UAVDepotPos{ 0, 0, 0};
 int GlobalTime = 0;
@@ -47,13 +55,31 @@ int main()
     std::vector<UAVObject> extantUAVs;
 
     //Some positions of depots and a vector to contain them
+    position pickUpLocation{ 50,50,0 };
     position anotherDepot{ 20,20,0 };
     std::vector<position> positionList;
     positionList.push_back(UAVDepotPos);
     //positionList.push_back(anotherDepot);
 
+    //Generate an m x n grid of depots spaced at spacingDistance starting at startingPoint
+    double spacingDistance = 100.0;
+    position startingPoint{ -100,-100,0 };
+    std::vector<position> positionGrid;
+    int m = 3; int n = 3;
+    for (int ij = 0; ij < m; ++ij)
+    {
+        for (int ijj = 0; ijj < n; ++ijj)
+        {
+            positionGrid.push_back(position{ startingPoint.x + ij * spacingDistance, startingPoint.y + ijj * spacingDistance, 0 });
+        }
+    }
+    //Push new positions onto positionList
+    vector_push_back(&positionList, positionGrid);
+
+
     //A vector containing all of the tasks
     auto repeatingTasks = randomTasklistGenerator(50, 1000, UAVDepotPos, positionList);
+    auto extraTasks = generateDeliveryTasks(50, 1000, UAVDepotPos, positionList, pickUpLocation);
 
     //Time taken for all tasks to be completed
     std::vector<int> timeTaken;
@@ -65,13 +91,14 @@ int main()
     int timeStep = 100; //In ms
 
     //How many UAVs to use in each loop
-    std::vector<int> numberUAVVector = { 1,2,4,8,10 };
+    std::vector<int> numberUAVVector = { 1,2,4,8,10,15 };
 
-    //Number of times to run the simulation loop
+    //Maximum number of times to run the simulation loop
     int numberOfLoops = 1000 * 200000;
 
-    int simulationNumber = numberUAVVector.size();
+    int simulationNumber = (int)numberUAVVector.size();
     //Run a series of simulations with different parameters:
+    #pragma loop(hint_parallel(6))
     for (int ij = 0; ij < simulationNumber; ++ij)
     {
         //Reset various parameters
@@ -105,45 +132,8 @@ int main()
 
             }
 
-            //if (extantUAVs[0].checkAvailability())
-            //{
-            //    int nextTask = findUnassignedTask(moreTasks);
-            //    if (nextTask == -1)
-            //    {
-            //        //No more tasks
-            //    }
-            //    else
-            //    {
-            //        //Assign the same UAV the next task
-            //        moreTasks[nextTask].resetStartingPosition(extantUAVs[0].getPosition());
-            //        extantUAVs[0].assignTask(moreTasks[nextTask]);
-            //        moreTasks[nextTask].setAssigned(true);
-            //        std::cout << "New task accepted!\n";
-            //    }
-            //}
 
-            //do
-            //{
-            //    int nextUAV = findAvailableUAV(extantUAVs);
-            //    if (nextUAV == -1)
-            //    {
-            //        //No more UAVs available
-            //        break;
-            //    }
-            //    int nextTask = findNearestTask(extantUAVs[nextUAV].getPosition(), moreTasks);
-            //    if (nextTask == -1)
-            //    {
-            //        //There are no more tasks
-            //        timeTaken.push_back(GlobalTime);
-            //        break;
-            //    }
-            //    else
-            //    {
-            //        extantUAVs[nextUAV].assignTask(moreTasks[nextTask]);
-            //        moreTasks[nextTask].setAssigned(true);
-            //    }
-            //} while (1);
-
+            //Task allocation loop
             unsigned int loopUAVs = (unsigned int)extantUAVs.size();
             #pragma loop(hint_parallel(6))
             for (unsigned int i = 0; i < loopUAVs; ++i)
@@ -154,8 +144,6 @@ int main()
                     if (nextTask == -1)
                     {
                         //There are no more tasks
-                        timeTaken.push_back(GlobalTime);
-                        itterationLog.push_back(std::pair<int, int>{numUAVs, GlobalTime});
                         complete = true;
                         break;
                     }
@@ -170,7 +158,23 @@ int main()
             //To avoid continuing pointlessly
             if (complete)
             {
-                break;
+                bool allComplete = true;
+                
+                for (unsigned int i = 0; i < loopUAVs; ++i)
+                {
+                    if (!extantUAVs[i].getTaskObject()->checkComplete())
+                    {
+                        //If one or more tasks are yet to be completed then the simulation cannot end
+                        allComplete = false;
+                    }
+                }
+                if (allComplete)
+                {
+                    //Only when all tasks are complete can we end the simulation and save the time taken
+                    timeTaken.push_back(GlobalTime);
+                    itterationLog.push_back(std::pair<int, int>{numUAVs, GlobalTime});
+                    break;
+                }
             }
 
             //Finally increment the global time variable
@@ -186,7 +190,6 @@ int main()
 
     writeCSV(itterationLog, "UAVno_Time.csv");
     
-
     //Do something with gathered simulation data here
     //...
 
@@ -555,6 +558,55 @@ std::vector<TaskObject> randomTasklistGenerator(int noTasks, double maxLegDist, 
     return outputTasks;
 }
 
+//Creates a list of delivery tasks originating at initialLocation that require a pickup location of pickUpLocation
+//Tasks will finish at the nearest location in finalLocation.
+std::vector<TaskObject> generateDeliveryTasks(int noTasks, double maxLegDist, position initalLocation, 
+    std::vector<position> finalLocations, position pickUpLocation, bool ignorePickup)
+{
+    if (ignorePickup)
+    {
+        return randomTasklistGenerator(noTasks, maxLegDist, initalLocation, finalLocations, TaskType::delivery);
+    }
+    //Initialise random seed with time
+    srand((unsigned int)time(NULL));
+    std::vector<TaskObject> outputTasks;
+
+    #pragma loop(hint_parallel(6))
+    for (int i = 0; i < noTasks; ++i)
+    {
+        TaskObject tempTask;
+        position dropOff;
+        position pickUp = pickUpLocation;
+        
+        //Variables used in loop
+        double angle = 0.0;
+        double distance = 0.0;
+        double xPart = 0.0;
+        double yPart = 0.0;
+
+        std::pair<double, position> testFinalPos;
+        do /******************************************************************************* WORK NEEDED ******************************************************/
+        {
+            //Create a random dropOff position and check if it is within maxLeg of a finalLocation - if not try again
+            angle = ((double)(rand() % 36000) / 100.0) / 180.0 * PI; //Angle in degrees of location from initialLocation
+            distance = (double)(rand() % (int)(maxLegDist * 100)) / 100.0; //Distance of location from initialLocation
+            xPart = distance * cos(angle); //Find x and y distances using trigonometry
+            yPart = distance * sin(angle);
+            dropOff.x = initalLocation.x + xPart;
+            dropOff.y = initalLocation.y + yPart;
+            dropOff.z = initalLocation.z;
+
+            testFinalPos = findClosest(dropOff, finalLocations);
+            if (testFinalPos.first <= maxLegDist) break; //There is scope here to make this more intelligent - probably do this at some point
+            //As this code can theoretically run forever - this must be improved
+        } while (1);
+
+        tempTask.deliveryTask(0, initalLocation, pickUp, dropOff, testFinalPos.second, 100, UAVType::any);
+        outputTasks.push_back(tempTask);
+    }
+    return outputTasks;
+}
+
 //Finds the nearest of comparisonLocations to startingPos and returns this position along with the distance as a pair
 std::pair<double, position> findClosest(position startingPos, std::vector<position> comparisonLocations)
 {
@@ -576,6 +628,15 @@ std::pair<double, position> findClosest(position startingPos, std::vector<positi
         }
     }
     return std::pair<double, position>{previous, comparisonLocations[nearest]};
+}
+
+//Pushes every entry of extraData onto originalVector
+void vector_push_back(std::vector<position>* originalVector, std::vector<position> extraData)
+{
+    for (int i = 0; i < extraData.size(); ++i)
+    {
+        originalVector->push_back(extraData[i]);
+    }
 }
 
 /*How is this going to work

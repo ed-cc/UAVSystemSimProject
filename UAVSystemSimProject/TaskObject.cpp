@@ -25,6 +25,7 @@ void TaskObject::deliveryTask(int currentTime, position currentLocation, positio
 	
 	
 	activeTask = true;
+	taskComplete = false;
 	payloadMass = collectedPayloadMass;
 
 	position startCruise = currentLocation;
@@ -53,6 +54,7 @@ void TaskObject::observationTask(int currentTime, position currentLocation, posi
 	typeOfTask = TaskType::observation;
 	assignedUAVType = typeAssigned;
 	activeTask = true;
+	taskComplete = false;
 
 	position startCruise = currentLocation;
 	startCruise.z = assignedSpecification.cruiseAlt;
@@ -74,6 +76,7 @@ void TaskObject::relocationTask(int currentTime, position currentLocation, posit
 	typeOfTask = TaskType::relocation;
 	assignedUAVType = typeAssigned;
 	activeTask = true;
+	taskComplete = false;
 
 	position startCruise = currentLocation;
 	startCruise.z = assignedSpecification.cruiseAlt;
@@ -99,6 +102,7 @@ std::optional<posTime> TaskObject::getNextPosition(int currentTime, position cur
 		if (locTimeListPostion == (locationTimeList.size() - 1))
 		{
 			//This means that the task is complete
+			taskComplete = true;
 			return std::nullopt;
 		}
 		else
@@ -146,6 +150,11 @@ void TaskObject::resetStartingPosition(position newStart)
 position TaskObject::getFirstRequiredPos()
 {
 	return locationTimeList[2].pos;
+}
+
+bool TaskObject::checkComplete()
+{
+	return taskComplete;
 }
 
 /*

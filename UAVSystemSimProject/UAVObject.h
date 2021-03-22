@@ -18,6 +18,7 @@ public:
 	std::string getName();
 	position getDestination();
 	UAVActivity getActivity();
+	TaskObject* getTaskObject();
 
 private:
 	//Variables:
