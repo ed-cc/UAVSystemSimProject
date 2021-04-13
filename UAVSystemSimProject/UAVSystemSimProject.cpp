@@ -91,7 +91,7 @@ int main()
     int timeStep = 100; //In ms
 
     //How many UAVs to use in each loop
-    std::vector<int> numberUAVVector = { 1,2,4,8,10,15 };
+    std::vector<int> numberUAVVector = { 1,2,3,4,5,6,7,8,9,10,12,14,16 };
 
     //Maximum number of times to run the simulation loop
     int numberOfLoops = 1000 * 200000;
@@ -504,8 +504,12 @@ std::vector<TaskObject> randomTasklistGenerator(int noTasks, double maxLegDist, 
             position pickUp;
             position dropOff;
             //Create a random pick up location near the initialLocation
-            double angle = ((rand() % 36000) / 100) / 180 * PI; //Angle in degrees of location from initialLocation
-            double distance = (double)(rand() % (int)(maxLegDist * 100)) / 100.0; //Distance of location from initialLocation
+            double angle = ((double)(rand() % 32400) / 90.0) / 180.0 * PI; //Angle in degrees of location from initialLocation
+            int randomNumMax = RAND_MAX;
+            double randomDivisor = (double)randomNumMax / maxLegDist;
+            int randomNum = rand();
+            double distance = (double)randomNum / randomDivisor;
+            //double distance = (double)(rand() % (int)(maxLegDist * 100.0)) / 100.0; //Distance of location from initialLocation
             double xPart = distance * cos(angle); //Find x and y distances using trigonometry
             double yPart = distance * sin(angle);
             pickUp.x = initalLocation.x + xPart;

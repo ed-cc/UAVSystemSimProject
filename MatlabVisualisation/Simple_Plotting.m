@@ -1,15 +1,15 @@
 clear; 
 
-inputData0 = readtable("UAV_0_0.csv");
-inputData1 = readtable("UAV_0_1.csv");
-inputData2 = readtable("UAV_0_2.csv");
-inputData3 = readtable("UAV_0_3.csv");
-inputData4 = readtable("UAV_0_4.csv");
-inputData5 = readtable("UAV_0_5.csv");
-inputData6 = readtable("UAV_0_6.csv");
-inputData7 = readtable("UAV_0_7.csv");
-inputData8 = readtable("UAV_0_8.csv");
-inputData9 = readtable("UAV_0_9.csv");
+inputData0 = readtable("UAV_5_0.csv");
+inputData1 = readtable("UAV_5_1.csv");
+inputData2 = readtable("UAV_5_2.csv");
+inputData3 = readtable("UAV_5_3.csv");
+inputData4 = readtable("UAV_5_4.csv");
+inputData5 = readtable("UAV_5_5.csv");
+inputData6 = readtable("UAV_5_6.csv");
+inputData7 = readtable("UAV_5_7.csv");
+inputData8 = readtable("UAV_5_8.csv");
+inputData9 = readtable("UAV_5_9.csv");
 
 plot3(inputData0.x, inputData0.y, inputData0.z);
 hold all;
