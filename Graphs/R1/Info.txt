@@ -1,0 +1,3 @@
+These results were created with a single UAV depot at 0,0,0 and using 50UAVs.
+The cruise speed of these UAVs was set to 10m/s 
+The tasks completed were a random mixture of delivery and observation tasks

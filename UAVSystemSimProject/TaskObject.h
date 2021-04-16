@@ -14,7 +14,11 @@ public:
 	bool checkComplete();
 	void setAssigned(bool assigned);
 	void resetStartingPosition(position newStart);
+	void recalculateFinalPosition(std::vector<position> finalPositions);
 	position getFirstRequiredPos();
+	position returnableLocation();
+	TaskType getTaskType();
+	double getTotalDistance();
 
 private:
 	//Variables:
@@ -32,6 +36,8 @@ private:
 	bool assignedTask = false;
 
 	bool taskComplete = false;
+
+	position returnableLoc = { 0,0,0 };
 	//Functions:
 	
 };

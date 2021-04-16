@@ -23,6 +23,7 @@ void TaskObject::deliveryTask(int currentTime, position currentLocation, positio
 		assignedSpecification = getUAVSpecsFromType(typeAssigned);
 	}
 	
+	returnableLoc = dropOff;
 	
 	activeTask = true;
 	taskComplete = false;
@@ -36,7 +37,7 @@ void TaskObject::deliveryTask(int currentTime, position currentLocation, positio
 	dropOffCruise.z = assignedSpecification.cruiseAlt;
 	position finalLocationCruise = finalLocation;
 	finalLocationCruise.z = assignedSpecification.cruiseAlt;
-
+	locationTimeList.clear();
 	locationTimeList.push_back(posTime{ startCruise, 0 });
 	locationTimeList.push_back(posTime{ pickupCruise, 0 });
 	locationTimeList.push_back(posTime{ pickUp, 0 });
@@ -56,13 +57,15 @@ void TaskObject::observationTask(int currentTime, position currentLocation, posi
 	activeTask = true;
 	taskComplete = false;
 
+	returnableLoc = taskLocation;
+
 	position startCruise = currentLocation;
 	startCruise.z = assignedSpecification.cruiseAlt;
 	position taskLocationCruise = taskLocation;
 	taskLocationCruise.z = assignedSpecification.cruiseAlt;
 	position finalLocationCruise = finalLocation;
 	finalLocationCruise.z = assignedSpecification.cruiseAlt;
-
+	locationTimeList.clear();
 	locationTimeList.push_back(posTime{ startCruise, 0 });
 	locationTimeList.push_back(posTime{ taskLocationCruise, 0 });
 	locationTimeList.push_back(posTime{ taskLocation, 0 });
@@ -78,11 +81,13 @@ void TaskObject::relocationTask(int currentTime, position currentLocation, posit
 	activeTask = true;
 	taskComplete = false;
 
+	returnableLoc = newLocation;
+
 	position startCruise = currentLocation;
 	startCruise.z = assignedSpecification.cruiseAlt;
 	position newLocationCruise = newLocation;
 	newLocationCruise.z = assignedSpecification.cruiseAlt;
-
+	locationTimeList.clear();
 	locationTimeList.push_back(posTime{ startCruise, 0 });
 	locationTimeList.push_back(posTime{ newLocationCruise, 0 });
 	locationTimeList.push_back(posTime{ newLocation, 0 });
@@ -132,17 +137,22 @@ void TaskObject::setAssigned(bool assigned = true)
 
 void TaskObject::resetStartingPosition(position newStart)
 {
-	if (get2DDistance(locationTimeList[0].pos, newStart) < 0.01)
-	{
-		//This is the same point so we don't need to change anything
-	}
-	else
-	{
-		//A new point has been given so rewrite the first line
-		position startCruise = newStart;
-		startCruise.z = assignedSpecification.cruiseAlt;
-		locationTimeList[0] = posTime{ startCruise, 0 };
-	}
+	//if (get2DDistance(locationTimeList[0].pos, newStart) < 0.01)
+	//{
+	//	//This is the same point so we don't need to change anything
+	//}
+	//else
+	//{
+	//	//A new point has been given so rewrite the first line
+	//	position startCruise = newStart;
+	//	startCruise.z = assignedSpecification.cruiseAlt;
+	//	locationTimeList[0] = posTime{ startCruise, 0 };
+	//}
+
+	//A new point has been given so rewrite the first line
+	position startCruise = newStart;
+	startCruise.z = assignedSpecification.cruiseAlt;
+	locationTimeList[0] = posTime{ startCruise, 0 };
 	
 }
 
@@ -156,6 +166,48 @@ bool TaskObject::checkComplete()
 {
 	return taskComplete;
 }
+
+position TaskObject::returnableLocation()
+{
+	return returnableLoc;
+}
+
+TaskType TaskObject::getTaskType()
+{
+	return typeOfTask;
+}
+
+void TaskObject::recalculateFinalPosition(std::vector<position> finalPositions)
+{
+	if (typeOfTask != TaskType::relocation)
+	{
+		std::pair<double, position> finalLoc = findClosest(locationTimeList[locationTimeList.size() - 3].pos, finalPositions);
+		position finalLocation = finalLoc.second;
+		position finalLocationCruise = finalLocation;
+		finalLocationCruise.z = assignedSpecification.cruiseAlt;
+		locationTimeList[locationTimeList.size() - 2] = posTime{ finalLocationCruise, 0 };
+		locationTimeList[locationTimeList.size() - 1] = posTime{ finalLocation, 0 };
+	}
+}
+
+//Returns the total distance the UAV has or will travel to complete the task
+double TaskObject::getTotalDistance()
+{
+	if (typeOfTask == TaskType::random)
+	{
+		return -1.0;
+	}
+
+	double distance = 0;
+
+	for (int i = 0; i < (locationTimeList.size() - 1); ++i)
+	{
+		distance += get2DDistance(locationTimeList[i].pos, locationTimeList[i + 1].pos);
+	}
+
+	return distance;
+}
+
 
 /*
 * Assign a task object to a UAV object

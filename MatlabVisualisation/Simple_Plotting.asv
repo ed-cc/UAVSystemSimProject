@@ -29,13 +29,13 @@ plot3(inputData9.x, inputData9.y, inputData9.z);
 plot3(inputData10.x, inputData10.y, inputData10.z);
 plot3(inputData11.x, inputData11.y, inputData11.z);
 
-ainputData4 = readtable("TaskList_4.csv");
-for i = 1:length(ainputData4.x)
-    if ainputData4.type(i) == 0
-        plot(ainputData4.x(i), ainputData4.y(i), 'om')
+
+for i = 1:length(inputData4.x)
+    if inputData4.type(i) == 0
+        plot(inputData4.x(i), inputData4.y(i), 'om')
     end
-    if ainputData4.type(i) == 1
-        plot(ainputData4.x(i), ainputData4.y(i), 'ob')
+    if inputData4.type(i) == 1
+        plot(inputData4.x(i), inputData4.y(i), 'ob')
     end 
     
 end

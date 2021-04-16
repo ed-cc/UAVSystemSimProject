@@ -1,0 +1,2 @@
+Tasks were generated about each landing pad rather than the centre to increase area covered slightly.
+With 5 pads the area is greater than with 4 but the UAVs are not distributed that much further away increasing distance.

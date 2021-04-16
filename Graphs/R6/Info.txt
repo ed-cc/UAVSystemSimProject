@@ -1,0 +1,12 @@
+2-200 UAVs
+500 tasks 
+Tasks generated about positions:
+{ -707,707,0 }
+{ -707,-707,0 }
+{ 707,707,0 }
+{ 707,-707,0 }
+{ 0,0,0 } <-- This one should have the highest task density
+All UAVs based at position { 0,0,0 }
+Suggests around 60 UAVs is optimal But fewer could be acceptable
+-> 60 would correspond to the same number of UAVs / task as the first set of results
+Area covered corresponds to ( 3 * pi - ( pi -2 ) ) = 8.2832 km^2

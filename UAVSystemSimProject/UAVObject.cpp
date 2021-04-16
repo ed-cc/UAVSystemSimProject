@@ -3,6 +3,7 @@
 void UAVObject::init(int currentTime, position initPos, std::string name, UAVType setType, RouteType routing, bool logging)
 {
 	startPosition = initPos;
+	currentPosition = startPosition;
 	typeOfUAV = setType;
 	available = true;
 	isLogging = logging;
@@ -80,6 +81,7 @@ int UAVObject::assignTask(TaskObject assignedTask)
 		available = false;
 		currentTask = assignedTask;
 		currentTask.setAssigned(true);
+		currentTask.resetStartingPosition(currentPosition);
 		return 0;
 	}
 	else return -1;

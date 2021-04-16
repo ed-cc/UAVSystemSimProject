@@ -87,3 +87,6 @@ double get2DDistance(position pointA, position pointB);
 
 //Returns UAV specification associated with UAVType
 specsUAV getUAVSpecsFromType(UAVType requiredType);
+
+//Finds the nearest of comparisonLocations to startingPos and returns this position along with the distance as a pair
+std::pair<double, position> findClosest(position startingPos, std::vector<position> comparisonLocations);
