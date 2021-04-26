@@ -5,5 +5,5 @@ The results of simulations are produced in *.csv files which can be processed us
 
 In the current form, simulation parameters must be changed by editing the main function of UAVSystemSimProject.cpp
 
-The MatlabVisualisation folder contains several basic scrips to produce graphs from the results generated from simulations run. 
+The MatlabVisualisation folder contains several basic scrips to produce graphs using the results generated from simulations run. 
 Examples of the graphs produced can be found in the Graphs folder, grouped by differing simulation parameters. 
