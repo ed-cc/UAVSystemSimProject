@@ -18,5 +18,5 @@ hold all;
 grid on;
 xlabel("Number of UAVs Operating");
 ylabel("Time Taken /s");
-title("A graph of Time Taken to Complete 50 Random Tasks vs Number of UAVs Operating");
+title("A graph of Time Taken to Complete 500 Random Tasks vs Number of UAVs Operating");
 

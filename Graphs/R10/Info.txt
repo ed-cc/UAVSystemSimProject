@@ -1,0 +1,3 @@
+500 tasks
+40 uavs
+generated about pads instead of a central location

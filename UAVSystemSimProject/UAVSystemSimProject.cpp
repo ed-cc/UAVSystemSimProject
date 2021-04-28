@@ -33,13 +33,13 @@ std::vector<TaskObject> randomTasklistGenerator(int noTasks, double maxTotalDist
 std::vector<TaskObject> generateDeliveryTasks(int noTasks, double maxLegDist, position initalLocation,
     std::vector<position> finalLocations, position pickUpLocation, bool ignorePickup = false);
 
-//Returns the location in the list of the nearest availebe UAV of UAVType type
+//Returns the index of the nearest availebe UAV of UAVType type
 //Returns -1 if no available UAVs were found
 int findNearestUAV(position targetLocation, std::vector<UAVObject> listOfUAVs, UAVType type = UAVType::any);
 
-//Returns the location in the list of the nearest available Task
+//Returns the index of the nearest available Task
 //Returns -1 if no available Tasks were found
-int findNearestTask(position targetLocation, std::vector<TaskObject> listOfTasks);
+int findNearestTask(position targetLocation, std::vector<TaskObject> listOfTasks, bool ignoreGrouping = true);
 
 //Pushes every entry of extraData onto originalVector
 void vector_push_back(std::vector<position>* originalVector, std::vector<position> extraData);
@@ -94,54 +94,68 @@ int main()
     //How many UAVs to use in each loop
     std::vector<int> numberUAVVector = { 2,4,6,8,10,12,16,20,30,40,50,70,90,110,140,170,200 };
 
-    positionList.push_back(position{ -707,707,0 });
+    /*positionList.push_back(position{ -707,707,0 });
     positionList.push_back(position{ -707,-707,0 });
     positionList.push_back(position{ 707,707,0 });
-    positionList.push_back(position{ 707,-707,0 });
-    positionList.push_back(position{ 0,0,0 });
+    positionList.push_back(position{ 707,-707,0 });*/
+    //positionList.push_back(position{ 0,0,0 });
 
-    auto sometasks = randomTasklistGenerator(100, 1000, positionList[0], positionList);
-    auto moreTasks1 = randomTasklistGenerator(100, 1000, positionList[1], positionList);
-    vector_push_back(&sometasks, moreTasks1);
+    //auto sometasks = randomTasklistGenerator(500, 1700, positionList[0], positionList);
+    //auto moreTasks1 = randomTasklistGenerator(100, 1000, positionList[1], positionList);
+     
+    /*vector_push_back(&sometasks, moreTasks1);
     moreTasks1.clear();
     moreTasks1 = randomTasklistGenerator(100, 1000, positionList[2], positionList);
     vector_push_back(&sometasks, moreTasks1);
     moreTasks1 = randomTasklistGenerator(100, 1000, positionList[3], positionList);
     vector_push_back(&sometasks, moreTasks1);
     moreTasks1 = randomTasklistGenerator(100, 1000, positionList[4], positionList);
-    vector_push_back(&sometasks, moreTasks1);
+    vector_push_back(&sometasks, moreTasks1);*/
     //auto sometasks = randomTasklistGenerator(400, 1000, UAVDepotPos, positionList);
+    positionList.clear();
+    positionList.push_back(position{ -866,-500,0 });
+    positionList.push_back(position{ 866,-500,0 });
+    positionList.push_back(position{ 0,1000,0 });
+    auto sometasks = randomTasklistGenerator(167, 1000, positionList[0], positionList);
+    auto moreTasks1 = randomTasklistGenerator(166, 1000, positionList[1], positionList);
+    vector_push_back(&sometasks, moreTasks1);
+    moreTasks1.clear();
+    moreTasks1 = randomTasklistGenerator(166, 1000, positionList[2], positionList);
+    vector_push_back(&sometasks, moreTasks1);
 
     //Maximum number of times to run the simulation loop
     int numberOfLoops = 1000 * 200000;
-
-    int simulationNumber = (int)numberUAVVector.size();
+    
+    int simulationNumber = 21; //(int)numberUAVVector.size();
     //Run a series of simulations with different parameters:
     #pragma loop(hint_parallel(6))
-    for (int ij = 0; ij < simulationNumber; ++ij) /****************************************** MAIN LOOP TO RUN MULTIPLE SIMULATIONS ****************************************************/
+    for (int ij = 1; ij < simulationNumber; ++ij) /****************************************** MAIN LOOP TO RUN MULTIPLE SIMULATIONS ****************************************************/
     {
+        //Spit out some info
+        std::cout << "Loop number: " << (ij + 1) << "/" << simulationNumber << std::endl;
+        
         //Reset various parameters
         GlobalTime = 0;
         auto moreTasks = repeatingTasks;
 
         //UAV Number
-        int numUAVs = numberUAVVector[ij];
+        int numUAVs = 40; //numberUAVVector[ij];
 
         //Code for variable locations
         moreTasks.clear();
-        positionList.clear();
+        //positionList.clear();
         /*
         if (ij == 0)
         {
             positionList.push_back(position{ 0,0,0 });
-            moreTasks = randomTasklistGenerator(200, 1000, positionList[0], positionList);
+            moreTasks = randomTasklistGenerator(500, 1000, positionList[0], positionList);
         }
         else if (ij == 1)
         {
             positionList.push_back(position{ -1000,0,0 });
             positionList.push_back(position{ 1000,0,0 });
-            moreTasks = randomTasklistGenerator(100, 1000, positionList[0], positionList);
-            auto moreTasks1 = randomTasklistGenerator(100, 1000, positionList[1], positionList);
+            moreTasks = randomTasklistGenerator(250, 1000, positionList[0], positionList);
+            auto moreTasks1 = randomTasklistGenerator(250, 1000, positionList[1], positionList);
             vector_push_back(&moreTasks, moreTasks1);
             moreTasks1.clear();
         }
@@ -150,11 +164,11 @@ int main()
             positionList.push_back(position{ -866,-500,0 });
             positionList.push_back(position{ 866,-500,0 });
             positionList.push_back(position{ 0,1000,0 });
-            moreTasks = randomTasklistGenerator(66, 1000, positionList[0], positionList);
-            auto moreTasks1 = randomTasklistGenerator(66, 1000, positionList[1], positionList);
+            moreTasks = randomTasklistGenerator(167, 1000, positionList[0], positionList);
+            auto moreTasks1 = randomTasklistGenerator(166, 1000, positionList[1], positionList);
             vector_push_back(&moreTasks, moreTasks1);
             moreTasks1.clear();
-            moreTasks1 = randomTasklistGenerator(67, 1000, positionList[2], positionList);
+            moreTasks1 = randomTasklistGenerator(166, 1000, positionList[2], positionList);
             vector_push_back(&moreTasks, moreTasks1);
         }
         else if (ij == 3)
@@ -163,13 +177,13 @@ int main()
             positionList.push_back(position{ -707,-707,0 });
             positionList.push_back(position{ 707,707,0 });
             positionList.push_back(position{ 707,-707,0 });
-            moreTasks = randomTasklistGenerator(50, 1000, positionList[0], positionList);
-            auto moreTasks1 = randomTasklistGenerator(50, 1000, positionList[1], positionList);
+            moreTasks = randomTasklistGenerator(125, 1000, positionList[0], positionList);
+            auto moreTasks1 = randomTasklistGenerator(125, 1000, positionList[1], positionList);
             vector_push_back(&moreTasks, moreTasks1);
             moreTasks1.clear();
-            moreTasks1 = randomTasklistGenerator(50, 1000, positionList[2], positionList);
+            moreTasks1 = randomTasklistGenerator(125, 1000, positionList[2], positionList);
             vector_push_back(&moreTasks, moreTasks1);
-            moreTasks1 = randomTasklistGenerator(50, 1000, positionList[3], positionList);
+            moreTasks1 = randomTasklistGenerator(125, 1000, positionList[3], positionList);
             vector_push_back(&moreTasks, moreTasks1);
         }
         else if (ij == 4)
@@ -179,21 +193,22 @@ int main()
             positionList.push_back(position{ 707,707,0 });
             positionList.push_back(position{ 707,-707,0 });
             positionList.push_back(position{ 0,0,0 });
-            moreTasks = randomTasklistGenerator(40, 1000, positionList[0], positionList);
-            auto moreTasks1 = randomTasklistGenerator(40, 1000, positionList[1], positionList);
+            moreTasks = randomTasklistGenerator(100, 1000, positionList[0], positionList);
+            auto moreTasks1 = randomTasklistGenerator(100, 1000, positionList[1], positionList);
             vector_push_back(&moreTasks, moreTasks1);
             moreTasks1.clear();
-            moreTasks1 = randomTasklistGenerator(40, 1000, positionList[2], positionList);
+            moreTasks1 = randomTasklistGenerator(100, 1000, positionList[2], positionList);
             vector_push_back(&moreTasks, moreTasks1);
-            moreTasks1 = randomTasklistGenerator(40, 1000, positionList[3], positionList);
+            moreTasks1 = randomTasklistGenerator(100, 1000, positionList[3], positionList);
             vector_push_back(&moreTasks, moreTasks1);
-            moreTasks1 = randomTasklistGenerator(40, 1000, positionList[4], positionList);
+            moreTasks1 = randomTasklistGenerator(100, 1000, positionList[4], positionList);
             vector_push_back(&moreTasks, moreTasks1);
         }
         */
         moreTasks = sometasks;
+        //positionList.push_back(position{ 0,0,0 });
 
-        positionList.push_back(position{ 0,0,0 });
+
         
 
         //Reset all UAVs
@@ -220,6 +235,86 @@ int main()
             ++iikk;
             if (iikk == positionList.size()) iikk = 0;
         }
+
+        
+
+
+        //Some basic route allocation and combining of tasks
+        double maxGroupedLength = 3000.0; // Should be 3*maxLegDist used to generate tasks
+        std::vector<TaskObject> newTasks;
+        if ((ij % 2) == 0)
+        {
+            bool tasksRemain = true;
+            do
+            {
+                for (int iikk = 0; iikk < positionList.size(); ++iikk)
+                {
+                    int firstTaskIndex = findNearestTask(positionList[iikk], moreTasks, false);
+                    if (firstTaskIndex == -1)
+                    {
+                        tasksRemain = false;
+                        break;
+                    }
+                    moreTasks[firstTaskIndex].setGrouping(true);
+                    if (moreTasks[firstTaskIndex].getTaskType() != TaskType::relocation)
+                    {
+                        double totalDistance = get2DDistance(positionList[iikk], moreTasks[firstTaskIndex].getFirstRequiredPos());
+                        if (moreTasks[firstTaskIndex].getTaskType() == TaskType::delivery)
+                            totalDistance += get2DDistance(moreTasks[firstTaskIndex].getFirstRequiredPos(), moreTasks[firstTaskIndex].returnableLocation());
+                        if (moreTasks[firstTaskIndex].getTotalDistance() < maxGroupedLength)
+                        {
+                            bool tooLong = false;
+                            std::vector<int> taskIndicies;
+                            taskIndicies.push_back(firstTaskIndex);
+                            for (int groupingCount = 0; groupingCount < 5; ++groupingCount)
+                            {
+                                //Find nearest task to the first task
+                                int indexNext = findNearestTask(moreTasks[taskIndicies[groupingCount]].returnableLocation(), moreTasks, false);
+                                if (indexNext == -1)
+                                {
+                                    tasksRemain = false;
+                                    break;
+                                }
+
+                                totalDistance += get2DDistance(moreTasks[taskIndicies[groupingCount]].returnableLocation(), moreTasks[indexNext].getFirstRequiredPos());
+                                if (moreTasks[indexNext].getTaskType() == TaskType::delivery)
+                                    totalDistance += get2DDistance(moreTasks[indexNext].getFirstRequiredPos(), moreTasks[indexNext].returnableLocation());
+                                //Now find the nearest landing pad to check distance
+                                auto closestPad = findClosest(moreTasks[indexNext].returnableLocation(), positionList);
+                                totalDistance += closestPad.first;
+                                if (totalDistance <= maxGroupedLength)
+                                {
+                                    //Still not too long so add this task to the list
+                                    taskIndicies.push_back(indexNext);
+                                    moreTasks[indexNext].setGrouping(true);
+                                    totalDistance -= closestPad.first;
+                                }
+                                else break; //Too long so stop looking
+                            }
+
+                            std::vector<TaskObject> tasksToGroup;
+                            for (int groupedTaskCount = 1; groupedTaskCount < taskIndicies.size(); ++groupedTaskCount)
+                            {
+                                tasksToGroup.push_back(moreTasks[groupedTaskCount]);
+                                moreTasks[groupedTaskCount].setGrouping(true);
+                                moreTasks[groupedTaskCount].setCompleteForGrouping();
+                                
+                            }
+                            moreTasks[taskIndicies[0]].addTasksForGrouping(tasksToGroup);
+                            moreTasks[taskIndicies[0]].recalculateFinalPosition(positionList);
+                            newTasks.push_back(moreTasks[taskIndicies[0]]);
+                            std::cout << "Shortened " << tasksToGroup.size() << " tasks to 1 path" << std::endl;
+                        }
+                    }
+                    if (!tasksRemain) break;
+                }
+            } while (tasksRemain);
+            std::cout << "Done grouping." << std::endl;
+            moreTasks.clear();
+            moreTasks = newTasks;
+        }
+
+
 
         /********************************************************************* Simulation loop *****************************************************************************/
         for (int ii = 0; ii < numberOfLoops; ++ii)
@@ -275,7 +370,7 @@ int main()
                 {
                     //Only when all tasks are complete can we end the simulation and save the time taken
                     timeTaken.push_back(GlobalTime);
-                    itterationLog.push_back(std::pair<int, int>{numUAVs, GlobalTime});
+                    itterationLog.push_back(std::pair<int, int>{ij, GlobalTime});
                     break;
                 }
             }
@@ -291,6 +386,18 @@ int main()
         }
 
         writeTaskDataCSV(moreTasks, "TaskList_" + std::to_string(ij) + ".csv");
+
+        if ((ij % 2) == 0)
+        {
+            sometasks.clear();
+            sometasks = randomTasklistGenerator(167, 1500, positionList[0], positionList);
+            auto moreTasks1 = randomTasklistGenerator(166, 1500, positionList[1], positionList);
+            vector_push_back(&sometasks, moreTasks1);
+            moreTasks1.clear();
+            moreTasks1 = randomTasklistGenerator(166, 1500, positionList[2], positionList);
+            vector_push_back(&sometasks, moreTasks1);
+        }
+
     }
 
     writeCSV(itterationLog, "UAVno_Time.csv");
@@ -378,7 +485,7 @@ int findNearestUAV(position targetLocation, std::vector<UAVObject> listOfUAVs, U
 
 //Returns the location in the list of the nearest available Task
 //Returns -1 if no available Tasks were found
-int findNearestTask(position targetLocation, std::vector<TaskObject> listOfTasks)
+int findNearestTask(position targetLocation, std::vector<TaskObject> listOfTasks, bool ignoreGrouping)
 {
     std::vector<position> availableTaskPositions;
     std::vector<int> availableTaskindex;
@@ -389,9 +496,22 @@ int findNearestTask(position targetLocation, std::vector<TaskObject> listOfTasks
     {
         if (!listOfTasks[i].checkAssigned())
         {
-            availableTaskPositions.push_back(listOfTasks[i].getFirstRequiredPos());
-            availableTaskindex.push_back(i);
-            noneFound = false;
+            if (ignoreGrouping)
+            {
+                availableTaskPositions.push_back(listOfTasks[i].getFirstRequiredPos());
+                availableTaskindex.push_back(i);
+                noneFound = false;
+            }
+            else 
+            {
+                if (!listOfTasks[i].isGrouped())
+                {
+                    availableTaskPositions.push_back(listOfTasks[i].getFirstRequiredPos());
+                    availableTaskindex.push_back(i);
+                    noneFound = false;
+                }
+            }
+            
         }
     }
     //Now we have a list of all availeble UAV positions, find the closest to the required position
@@ -612,7 +732,7 @@ std::vector<TaskObject> randomTasklistGenerator(int noTasks, double maxLegDist, 
             position pickUp;
             position dropOff;
             //Create a random pick up location near the initialLocation
-            double angle = ((double)(rand() % 32400) / 90.0) / 180.0 * PI; //Angle in degrees of location from initialLocation
+            double angle = ((double)(rand() % 16200) / 45.0) / 180.0 * PI; //Angle in degrees converted to radians of location from initialLocation
             int randomNumMax = RAND_MAX;
             double randomDivisor = (double)randomNumMax / maxLegDist;
             int randomNum = rand();
@@ -628,7 +748,8 @@ std::vector<TaskObject> randomTasklistGenerator(int noTasks, double maxLegDist, 
             do /******************************************************************************* WORK NEEDED ******************************************************/
             {
                 //Create a random dropOff position and check if it is within maxLeg of a finalLocation - if not try again
-                angle = ((double)(rand() % 36000) / 100.0) / 180.0 * PI; //Angle in degrees of location from initialLocation
+                //angle = ((double)(rand() % 36000) / 100.0) / 180.0 * PI; //Angle in degrees of location from initialLocation
+                angle = ((double)(rand() % 16200) / 45.0) / 180.0 * PI; //Angle in degrees converted to radians of location from initialLocation
                 randomDivisor = (double)randomNumMax / maxLegDist;
                 randomNum = rand();
                 distance = (double)randomNum / randomDivisor;
@@ -652,7 +773,8 @@ std::vector<TaskObject> randomTasklistGenerator(int noTasks, double maxLegDist, 
 
             // A random point at a distance less than maxLegDist is the task location and then the nearest final location to this is chosen
             // This ensures that the second leg is always equal or shorter in length to the first.
-            double angle = ((double)(rand() % 36000) / 100.0) / 180.0 * PI; //Angle in degrees of location from initialLocation
+            //double angle = ((double)(rand() % 36000) / 100.0) / 180.0 * PI; //Angle in degrees of location from initialLocation
+            double angle = ((double)(rand() % 16200) / 45.0) / 180.0 * PI; //Angle in degrees converted to radians of location from initialLocation
             int randomNumMax = RAND_MAX;
             double randomDivisor = (double)randomNumMax / maxLegDist;
             int randomNum = rand();
@@ -785,6 +907,10 @@ bool writeTaskDataCSV(std::vector<TaskObject> tasks, std::string fileName)
     targetFile.close();
     return true;
 }
+
+
+
+
 
 /*How is this going to work
 * 

@@ -19,6 +19,12 @@ public:
 	position returnableLocation();
 	TaskType getTaskType();
 	double getTotalDistance();
+	bool isGrouped();
+	void setGrouping(bool grouping);
+	void setCompleteForGrouping();
+	std::vector<posTime> getEntirePosTimeList();
+	int addTasksForGrouping(std::vector<TaskObject> groupTasks);
+	
 
 private:
 	//Variables:
@@ -36,6 +42,8 @@ private:
 	bool assignedTask = false;
 
 	bool taskComplete = false;
+
+	bool taskGrouped = false;
 
 	position returnableLoc = { 0,0,0 };
 	//Functions:

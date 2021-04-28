@@ -55,6 +55,8 @@ plot ( 866, -500, '*g');
 plot ( -866, -500, '*g');
 plot ( 0, 1000, '*g');
 title("Locations of Randomly Generated Tasks and Landing Pads");
+xlabel("x /m");
+ylabel("y /m");
 
 figure;
 hold all;
@@ -95,6 +97,7 @@ title("Locations of Randomly Generated Tasks and Landing Pads");
 
 
 %Time Taken
+times.time = times.time / 1000;
 figure;
 hold all;
 lpNumber = 1:5;
@@ -102,7 +105,7 @@ plot(lpNumber, times.time);
 xlabel("Number of Landing Pads");
 xticks([1 2 3 4 5]);
 ylabel("Time taken /s");
-title("Time Taken to Complete 400 Random Tasks vs Number of Landing Pads");
+title("Time Taken to Complete 500 Random Tasks vs Number of Landing Pads");
 grid on;
 
 
@@ -117,7 +120,7 @@ avDist(5) = mean(inputData4.distance);
 plot (lpNumber, avDist);
 ylabel("Mean Distance Travelled per Task /m");
 xlabel("Number of Landing Pads");
-title("Mean Distance Travelled vs Number of Landing Pads Available");
+title("Mean Distance Travelled vs Number of Landing Pads");
 xticks([1 2 3 4 5]);
 grid on;
 

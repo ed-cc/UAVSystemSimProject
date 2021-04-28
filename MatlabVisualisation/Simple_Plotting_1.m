@@ -1,8 +1,9 @@
+clear all;
+close all;
 
 
-
-for number = 0:4
-    for j = 0:11
+for number = 0:1
+    for j = 0:1
         inputData{j+1} = readtable("UAV_"+ number +"_" + j + ".csv");
     end
     

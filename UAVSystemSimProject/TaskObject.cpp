@@ -209,6 +209,64 @@ double TaskObject::getTotalDistance()
 }
 
 
+bool TaskObject::isGrouped()
+{
+	return taskGrouped;
+}
+
+void TaskObject::setGrouping(bool grouping)
+{
+	taskGrouped = grouping;
+}
+
+void TaskObject::setCompleteForGrouping()
+{
+	taskComplete = true;
+}
+
+std::vector<posTime> TaskObject::getEntirePosTimeList()
+{
+	return locationTimeList;
+}
+
+
+int TaskObject::addTasksForGrouping(std::vector<TaskObject> groupTasks)
+{
+	posTime finalOne = locationTimeList[locationTimeList.size() - 2];
+	posTime finalTwo = locationTimeList[locationTimeList.size() - 1];
+	locationTimeList.erase(locationTimeList.end() - 1);
+	locationTimeList.erase(locationTimeList.end() - 1);
+	int checkCounter = 0;
+	//Loop through all locations to be grouped
+	for (int i = 0; i < groupTasks.size(); ++i)
+	{
+		auto positionsToUse = groupTasks[i].getEntirePosTimeList();
+		if (groupTasks[i].getTaskType() == TaskType::delivery)
+		{
+			//If it's a delivery task we have 6 locations to add
+			locationTimeList.push_back(positionsToUse[1]);
+			locationTimeList.push_back(positionsToUse[2]);
+			locationTimeList.push_back(positionsToUse[3]);
+			locationTimeList.push_back(positionsToUse[4]);
+			locationTimeList.push_back(positionsToUse[5]);
+			locationTimeList.push_back(positionsToUse[6]);
+		}
+		else 
+		{
+			//Not a delivery task to only 3 locations to add
+			locationTimeList.push_back(positionsToUse[1]);
+			locationTimeList.push_back(positionsToUse[2]);
+			locationTimeList.push_back(positionsToUse[3]);
+		}
+		++checkCounter;
+	}
+
+	locationTimeList.push_back(finalOne);
+	locationTimeList.push_back(finalTwo);
+
+	return checkCounter;
+}
+
 /*
 * Assign a task object to a UAV object
 * UAV object update function called every time step
